@@ -47,14 +47,14 @@
       <div>
         <p class="measure">
           Each skill lives in its own directory in the agent workspace. The gateway reads
-          <code>SKILL.md</code> at startup and puts it in front of the model; the model never
+          <code>SKILL.md</code> at startup and puts it in front of the model, the model never
           sees the Python. Everything the model needs in order to choose correctly has to be
           in that Markdown file, and everything it must not get wrong has to be in the script.
         </p>
         <p class="measure">
           Every skill ends by printing one line beginning with <code>RESULT</code>, followed
           by space-separated <code>key=value</code> pairs. That line is the only thing the
-          model reads back. Free-form prose output invites the model to interpret; a fixed
+          model reads back. Free-form prose output invites the model to interpret, a fixed
           schema does not.
         </p>
       </div>
@@ -64,7 +64,11 @@
 │   ├── SKILL.md
 │   └── walk.py
 ├── sit/
+│   ├── SKILL.md
+│   └── sit.py
 ├── stretch/
+│   ├── SKILL.md
+│   └── stretch.py
 └── detect_object/
     ├── SKILL.md
     └── detect_object.py</code></pre>
@@ -153,8 +157,6 @@ RESULT status=ok distance_m=&lt;float&gt; heading=&lt;direction&gt;</code></pre>
     </table>
 
     <p class="note" style="margin-top:28px;">
-      Detection at <code>imgsz=320</code> was too coarse to find furniture at one to two
-      metres. 640 is the working value and the reason the skill is usable at all.
     </p>
   </div>
 </section>
@@ -178,7 +180,7 @@ RESULT status=ok distance_m=&lt;float&gt; heading=&lt;direction&gt;</code></pre>
 
 <footer class="site-foot">
   <div class="wrap">
-    <span>Go2 Language Control · Robotics Lab, Bar-Ilan University</span>
+    <span>Go2 OpenClaw · Robotics Lab, Bar-Ilan University</span>
     <span><a href="https://github.com/TamirAshwal/Go2">Source on GitHub</a> · Built as static HTML</span>
   </div>
 </footer>
