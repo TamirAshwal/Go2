@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill library — Go2 Language Control</title>
+<meta name="description" content="Every skill in the library: the description the model reads, the script that runs, and the result schema it returns.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="mark" href="index.html">Go2 Language Control <span>LAB</span></a>
+    <a class="navlink" href="index.html">Overview</a>
+    <a class="navlink" href="architecture.html">Architecture</a>
+    <a class="navlink" href="skills.html" aria-current="page">Skills</a>
+    <a class="navlink" href="experiments.html">Experiments</a>
+    <a class="navlink" href="reproduce.html">Reproduce</a>
+    <a class="navlink" href="https://github.com/TamirAshwal/Go2">GitHub</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Skill library</p>
+    <h1>Four skills, and a contract between them.</h1>
+    <p class="hero-sub">
+      A skill is a folder with a description the model reads and a script the machine runs.
+      The description is the interface. The script is the implementation. Neither knows
+      about the other's internals.
+    </p>
+  </div>
+</section>
+
+<section class="band band-first">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The contract</p>
+      <h2>Anatomy of a skill</h2>
+    </div>
+
+    <div class="grid g2">
+      <div>
+        <p class="measure">
+          Each skill lives in its own directory in the agent workspace. The gateway reads
+          <code>SKILL.md</code> at startup and puts it in front of the model; the model never
+          sees the Python. Everything the model needs in order to choose correctly has to be
+          in that Markdown file, and everything it must not get wrong has to be in the script.
+        </p>
+        <p class="measure">
+          Every skill ends by printing one line beginning with <code>RESULT</code>, followed
+          by space-separated <code>key=value</code> pairs. That line is the only thing the
+          model reads back. Free-form prose output invites the model to interpret; a fixed
+          schema does not.
+        </p>
+      </div>
+      <div>
+<pre><code>skills/
+├── walk/
+│   ├── SKILL.md
+│   └── walk.py
+├── sit/
+├── stretch/
+└── detect_object/
+    ├── SKILL.md
+    └── detect_object.py</code></pre>
+        <div class="result">RESULT found=true class=person conf=0.87</div>
+        <div class="result">RESULT status=ok distance_m=2.0 heading=forward</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Worked example</p>
+      <h2>walk, in full</h2>
+    </div>
+    <p class="lede" style="margin-bottom:32px;">
+      This is the complete skill, reproduced exactly as it exists on disk. Paste your
+      current file contents into the two blocks below so a new student can compare against
+      what is running.
+    </p>
+
+    <h3 style="margin-bottom:14px;">SKILL.md</h3>
+<pre><code><span class="c"># PASTE THE VERBATIM CONTENTS OF skills/walk/SKILL.md HERE</span>
+
+---
+name: walk
+description: Move the robot forward or turn it in place.
+---
+
+## Parameters
+- direction: forward | turn_left | turn_right
+- distance_m: metres to travel (forward only)
+
+## Output
+RESULT status=ok distance_m=&lt;float&gt; heading=&lt;direction&gt;</code></pre>
+
+    <h3 style="margin:34px 0 14px;">walk.py</h3>
+<pre><code><span class="c"># PASTE THE VERBATIM CONTENTS OF skills/walk/walk.py HERE</span>
+
+<span class="c"># Two things this script exists to get right:</span>
+<span class="c">#  1. Move() must be resent at ~10 Hz for the full duration.</span>
+<span class="c">#     A single call stops after about one second.</span>
+<span class="c">#  2. YAW_RATE = 1.0 is calibrated, not arbitrary. Lower values</span>
+<span class="c">#     turn less than proportionally and stall below ~0.5.</span></code></pre>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Inventory</p>
+      <h2>What the model can call</h2>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr><th>Skill</th><th>Parameters</th><th>Result line</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>walk</code></td>
+          <td><code>direction</code>, <code>distance_m</code></td>
+          <td><code>status</code>, <code>distance_m</code>, <code>heading</code></td>
+          <td>Open loop at 0.3&nbsp;m/s. Turns use <code>YAW_RATE=1.0</code>, about 80° per call.</td>
+        </tr>
+        <tr>
+          <td><code>sit</code></td>
+          <td>—</td>
+          <td><code>status</code></td>
+          <td>High-level sport command. Returns once the posture completes.</td>
+        </tr>
+        <tr>
+          <td><code>stretch</code></td>
+          <td>—</td>
+          <td><code>status</code></td>
+          <td>Built-in gesture. Used mainly to confirm the DDS link end to end.</td>
+        </tr>
+        <tr>
+          <td><code>detect_object</code></td>
+          <td><code>target</code></td>
+          <td><code>found</code>, <code>class</code>, <code>conf</code></td>
+          <td>YOLOv8-nano at <code>imgsz=640</code>, COCO classes, single frame, CUDA.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="note" style="margin-top:28px;">
+      Detection at <code>imgsz=320</code> was too coarse to find furniture at one to two
+      metres. 640 is the working value and the reason the skill is usable at all.
+    </p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Design rule</p>
+      <h2>Complexity belongs in the skill, not the runner</h2>
+    </div>
+    <p class="measure">
+      There is a constant temptation to make the dispatch tool smarter — let it accept a
+      small script, a sequence, a conditional. Every one of those additions reopens the hole
+      that Approach 1 exists to close. If the runner can execute arbitrary logic, the tool
+      profile is decorative. So the runner stays minimal: it takes a skill name and
+      parameters, validates them, runs one script, returns one line. Anything that needs to
+      be cleverer than that becomes a new skill, reviewed and tested like any other.
+    </p>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>Go2 Language Control · Robotics Lab, Bar-Ilan University</span>
+    <span><a href="https://github.com/TamirAshwal/Go2">Source on GitHub</a> · Built as static HTML</span>
+  </div>
+</footer>
+
+</body>
+</html>

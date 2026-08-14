@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reproduce — Go2 Language Control</title>
+<meta name="description" content="Everything needed to bring the system up from a cold machine and confirm it works.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="mark" href="index.html">Go2 Language Control <span>LAB</span></a>
+    <a class="navlink" href="index.html">Overview</a>
+    <a class="navlink" href="architecture.html">Architecture</a>
+    <a class="navlink" href="skills.html">Skills</a>
+    <a class="navlink" href="experiments.html">Experiments</a>
+    <a class="navlink" href="reproduce.html" aria-current="page">Reproduce</a>
+    <a class="navlink" href="https://github.com/TamirAshwal/Go2">GitHub</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Reproduce</p>
+    <h1>Bring it up from a cold machine.</h1>
+    <p class="hero-sub">
+      Written for someone who has never touched this setup. If a step here does not work on
+      a clean install, that is a bug in this page and it should be fixed.
+    </p>
+  </div>
+</section>
+
+<section class="band band-first">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Before you start</p>
+      <h2>Hardware and access</h2>
+    </div>
+    <table class="table">
+      <thead><tr><th>Item</th><th>What we used</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Robot</td><td>Unitree Go2</td><td>Powered on, standing, remote in a safe state</td></tr>
+        <tr><td>Workstation</td><td>Dell Precision 3660 · Ubuntu 20.04 · RTX 4090</td><td>GPU is used for detection only</td></tr>
+        <tr><td>Robot link</td><td>USB-Ethernet adapter</td><td>Wired to the Go2's Ethernet port</td></tr>
+        <tr><td>Internet</td><td>Phone USB tethering</td><td>Any second interface works</td></tr>
+        <tr><td>Accounts</td><td>Anthropic API key · Telegram bot token</td><td>Request access from the lab supervisor</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:26px;">
+      Software versions are pinned in the repository. Check <code>VERSIONS.md</code> before
+      assuming a newer release behaves the same way.
+    </p>
+  </div>
+</section>
+
+<section class="band band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Install</p>
+      <h2>One time, in order</h2>
+    </div>
+    <ol class="steps" style="border-bottom:1px solid var(--hair-dk);">
+      <li>
+        <h3>Clone the repository</h3>
+        <p>Everything below assumes you are working from the cloned tree. Repository URL and
+        access procedure are on the project README.</p>
+      </li>
+      <li>
+        <h3>Unitree SDK in a virtual environment</h3>
+        <p>Create the venv, install <code>unitree_sdk2_python</code> in editable mode, then
+        add <code>ultralytics</code> and <code>opencv-python</code> for detection. All skills
+        run inside this environment.</p>
+      </li>
+      <li>
+        <h3>Network profiles</h3>
+        <p>Create both connections and confirm the robot profile is not the default route.
+        Getting this wrong is the most common failure: the robot pings, but API calls
+        silently go nowhere.</p>
+<pre><code>nmcli connection modify "Robot-GO2" ipv4.never-default yes</code></pre>
+      </li>
+      <li>
+        <h3>OpenClaw and the gateway</h3>
+        <p>Install with <code>pnpm</code>. The gateway configuration lives at
+        <code>~/.openclaw/openclaw.json</code> and holds the Telegram token, the model
+        selection, and the tool profile.</p>
+      </li>
+      <li>
+        <h3>Model credentials</h3>
+        <p>Paste the API key through the interactive command so it never appears in shell
+        history, then confirm the model resolves.</p>
+<pre><code>pnpm openclaw models auth paste-api-key
+pnpm openclaw models status</code></pre>
+      </li>
+      <li>
+        <h3>Install the skills</h3>
+        <p>Copy the skill folders into the agent workspace. The gateway discovers them by
+        reading each <code>SKILL.md</code> at startup, so a restart is required after any
+        change.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Every session</p>
+      <h2>Startup sequence</h2>
+    </div>
+    <p class="measure" style="margin-bottom:24px;">
+      Four steps, in this order, every time. The last one matters more than it looks: a
+      reused Telegram thread carries the model's memory of skills that may no longer exist,
+      and it will confidently reissue commands that were valid an hour ago.
+    </p>
+<pre><code>nmcli connection up "Robot-GO2"
+ping -c 3 192.168.123.18
+pnpm openclaw gateway restart      <span class="c"># from the openclaw directory</span>
+<span class="c"># then start a fresh conversation with the Telegram bot</span></code></pre>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Acceptance test</p>
+      <h2>Confirm it works before you change anything</h2>
+    </div>
+    <p class="measure" style="margin-bottom:28px;">
+      Send each message to the bot and check the result line. If all three pass, the full
+      path from language to motor is intact and any later failure is yours, not the setup's.
+    </p>
+
+    <div class="grid g3">
+      <div class="card">
+        <h4 style="margin-bottom:10px;">Say to the bot</h4>
+        <p style="font-size:16px;">“Stretch.”</p>
+        <div class="result" style="margin-top:14px;">RESULT status=ok</div>
+        <p class="note" style="margin-top:12px;">Confirms the DDS link and the sport controller.</p>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom:10px;">Say to the bot</h4>
+        <p style="font-size:16px;">“Walk forward two metres.”</p>
+        <div class="result" style="margin-top:14px;">RESULT status=ok distance_m=2.0</div>
+        <p class="note" style="margin-top:12px;">Confirms locomotion and watchdog resending.</p>
+      </div>
+      <div class="card">
+        <h4 style="margin-bottom:10px;">Say to the bot</h4>
+        <p style="font-size:16px;">“Is there a person in front of you?”</p>
+        <div class="result" style="margin-top:14px;">RESULT found=true class=person</div>
+        <p class="note" style="margin-top:12px;">Confirms camera, CUDA and the detection model.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">When it breaks</p>
+      <h2>Failures we have actually hit</h2>
+    </div>
+    <table class="table">
+      <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Robot pings, API calls time out</td>
+          <td>Robot profile took the default route</td>
+          <td>Set <code>ipv4.never-default yes</code> and bring the link back up</td>
+        </tr>
+        <tr>
+          <td>Robot moves for about a second and stops</td>
+          <td>Motion command sent once</td>
+          <td>Resend at roughly 10&nbsp;Hz for the whole duration</td>
+        </tr>
+        <tr>
+          <td>Turns are far shorter than expected</td>
+          <td>Yaw rate below the usable range</td>
+          <td>Use the calibrated value; do not assume it scales linearly</td>
+        </tr>
+        <tr>
+          <td>Model searches the filesystem for a skill</td>
+          <td>Stale session after a skill edit</td>
+          <td>Restart the gateway and open a fresh Telegram thread</td>
+        </tr>
+        <tr>
+          <td>Detection misses obvious objects</td>
+          <td>Inference image size too small</td>
+          <td>Use <code>imgsz=640</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Handover</p>
+      <h2>Backup and ownership</h2>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>What to back up</h3>
+        <p>The gateway configuration, the skill workspace, and the session logs. Everything
+        else can be reinstalled from the repository.</p>
+      </div>
+      <div class="card">
+        <h3>Who to ask</h3>
+        <p>Repository access, API billing and robot booking each have an owner. Names and
+        the request procedure are in the project README so this page does not go stale.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>Go2 Language Control · Robotics Lab, Bar-Ilan University</span>
+    <span><a href="https://github.com/TamirAshwal/Go2">Source on GitHub</a> · Built as static HTML</span>
+  </div>
+</footer>
+
+</body>
+</html>

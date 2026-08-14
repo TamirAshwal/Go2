@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Natural-Language Control of a Unitree Go2 — Robotics Lab</title>
+<meta name="description" content="Controlling a Unitree Go2 quadruped through plain-language instructions, using an LLM dispatcher over a validated skill library.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="mark" href="index.html">Go2 Language Control <span>LAB</span></a>
+    <a class="navlink" href="index.html" aria-current="page">Overview</a>
+    <a class="navlink" href="architecture.html">Architecture</a>
+    <a class="navlink" href="skills.html">Skills</a>
+    <a class="navlink" href="experiments.html">Experiments</a>
+    <a class="navlink" href="reproduce.html">Reproduce</a>
+    <a class="navlink" href="https://github.com/TamirAshwal/Go2">GitHub</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Robotics research · Quadruped autonomy</p>
+      <h1>A robot that takes orders in plain language.</h1>
+      <p class="hero-sub">
+        A Unitree Go2 quadruped, a Telegram chat, and a language model that is allowed to
+        do exactly one thing: pick a skill and run it. We are studying whether that
+        restriction has to be built into the system, or whether asking politely is enough.
+      </p>
+    </div>
+
+    <div class="trace" aria-label="Example dispatch trace from a live session">
+      <div class="trace-head"><span>Session trace</span><span>Telegram → Go2</span></div>
+      <div class="step">
+        <div class="step-tag">Human</div>
+        <div class="step-body">Look around the room and tell me if anyone is there.</div>
+      </div>
+      <div class="step">
+        <div class="step-tag">Dispatch</div>
+        <div class="step-body"><em>detect_object</em> target=person</div>
+      </div>
+      <div class="step">
+        <div class="step-tag">Result</div>
+        <div class="step-body">RESULT found=false</div>
+      </div>
+      <div class="step">
+        <div class="step-tag">Dispatch</div>
+        <div class="step-body"><em>walk</em> direction=turn_right yaw=1.0</div>
+      </div>
+      <div class="step">
+        <div class="step-tag">Dispatch</div>
+        <div class="step-body"><em>detect_object</em> target=person</div>
+      </div>
+      <div class="step">
+        <div class="step-tag">Result</div>
+        <div class="step-body"><span class="ok">RESULT found=true class=person conf=0.87</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band band-first">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The question</p>
+      <h2>Do rules in a prompt actually constrain a model?</h2>
+    </div>
+
+    <p class="lede" style="margin-bottom:38px;">
+      Every agent framework tells the model what it may not do. We wanted to know whether
+      that instruction holds when the model has a shell. So we built the same robot twice:
+      once where the restriction is written in the prompt, and once where the tools simply
+      are not there.
+    </p>
+
+    <div class="grid g2">
+      <div class="approach">
+        <span class="approach-tag">Approach 1 — architectural</span>
+        <h3>The tools are removed</h3>
+        <p>The agent runs under a restricted tool profile. Raw shell and file editing are
+        denied at the framework level, leaving one dispatch tool that can call a validated
+        skill and nothing else. The rule cannot be argued with, because there is no tool to
+        argue with.</p>
+        <ul class="tools">
+          <li class="allow">run_skill</li>
+          <li class="deny">exec</li>
+          <li class="deny">write</li>
+          <li class="deny">edit</li>
+          <li class="deny">apply_patch</li>
+        </ul>
+      </div>
+
+      <div class="approach">
+        <span class="approach-tag">Approach 2 — prompt only</span>
+        <h3>The tools are there, and we ask nicely</h3>
+        <p>The agent keeps full shell access and is told in its system prompt to use the
+        skill library, one skill per turn. This is how most agent deployments actually work.
+        The question is what happens when the shortest path to the goal runs straight
+        through the rule.</p>
+        <ul class="tools">
+          <li class="allow">run_skill</li>
+          <li class="allow">exec</li>
+          <li class="allow">write</li>
+          <li class="allow">edit</li>
+          <li class="allow">apply_patch</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Watch it run</p>
+      <h2>Recorded sessions</h2>
+    </div>
+
+    <div class="grid g2">
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Room scan — Approach 2</strong>
+          Replace this block with your YouTube embed.<br>
+          See the comment in the page source.</p>
+          <!--
+            To embed: delete the <p class="video-hint"> above and paste
+            <iframe src="https://www.youtube.com/embed/VIDEO_ID" title="Room scan"
+                    allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+                    allowfullscreen></iframe>
+          -->
+        </div>
+        <figcaption>The model was given no scan routine. It invented a four-direction sweep.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Walk and turn</strong>
+          Replace this block with your YouTube embed.</p>
+        </div>
+        <figcaption>Open-loop locomotion: distance is velocity × time, not odometry.</figcaption>
+      </figure>
+    </div>
+
+    <p class="note" style="margin-top:28px;">
+      Videos are hosted on YouTube as unlisted uploads rather than committed to the repository —
+      GitHub rejects files over 100&nbsp;MB and the clone stays fast this way.
+    </p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="grid g2">
+      <div>
+        <p class="eyebrow">What is running</p>
+        <h2>The stack</h2>
+        <p class="measure" style="margin-top:20px;">
+          Nothing here is simulated. A lab workstation talks to the robot over a wired DDS
+          link and to the operator over Telegram. The language model never touches a motor —
+          it selects a Python skill, and the skill talks to the robot.
+        </p>
+      </div>
+      <ul class="stack-list">
+        <li><b>Robot</b> — Unitree Go2, high-level sport controller over DDS</li>
+        <li><b>Workstation</b> — Dell Precision 3660, Ubuntu 20.04, RTX 4090</li>
+        <li><b>Agent framework</b> — OpenClaw, gateway with tool-profile gating</li>
+        <li><b>Model</b> — Claude Sonnet via the Anthropic API</li>
+        <li><b>Interface</b> — Telegram bot, text in and text out</li>
+        <li><b>Perception</b> — YOLOv8-nano, single-frame detection at 640&nbsp;px</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Read on</p>
+      <h2>Everything we built and everything that broke</h2>
+    </div>
+    <div class="grid g3">
+      <a class="card" href="architecture.html">
+        <h3>Architecture</h3>
+        <p>How an instruction in a chat window becomes a motor command, and where the
+        gating happens.</p>
+        <span class="go">Read →</span>
+      </a>
+      <a class="card" href="skills.html">
+        <h3>Skill library</h3>
+        <p>Every skill in full: the description the model reads, the script that runs, and
+        the result schema it returns.</p>
+        <span class="go">Read →</span>
+      </a>
+      <a class="card" href="experiments.html">
+        <h3>Experiments</h3>
+        <p>What each approach did when asked to search a room, with the session logs to
+        check it against.</p>
+        <span class="go">Read →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="grid g2">
+      <div>
+        <p class="eyebrow">Honest accounting</p>
+        <h2>Known limitations</h2>
+      </div>
+      <ul class="limits">
+        <li>Locomotion is dead-reckoned. Distance is estimated from velocity and duration, so error accumulates and there is no map.</li>
+        <li>There is no obstacle avoidance. The robot will walk into things.</li>
+        <li>Detection runs on a single frame at a single moment. A person who moves between the turn and the capture is missed.</li>
+        <li>A failed skill has no recovery path. The model is told it failed and decides what to do next with no fallback behaviour.</li>
+        <li>Changing a skill mid-session leaves the model replaying stale commands. A fresh session is required after any edit.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>Go2 OpenClaw · Robotics Lab, Bar-Ilan University</span>
+    <span><a href="https://github.com/TamirAshwal/Go2">Source on GitHub</a> · Built as static HTML</span>
+  </div>
+</footer>
+
+</body>
+</html>

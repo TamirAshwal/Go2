@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — Go2 Language Control</title>
+<meta name="description" content="How a chat message becomes a motor command: gateway, dispatcher, skill library, DDS.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="mark" href="index.html">Go2 Language Control <span>LAB</span></a>
+    <a class="navlink" href="index.html">Overview</a>
+    <a class="navlink" href="architecture.html" aria-current="page">Architecture</a>
+    <a class="navlink" href="skills.html">Skills</a>
+    <a class="navlink" href="experiments.html">Experiments</a>
+    <a class="navlink" href="reproduce.html">Reproduce</a>
+    <a class="navlink" href="https://github.com/TamirAshwal/Go2">GitHub</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Architecture</p>
+    <h1>From a chat message to a motor command.</h1>
+    <p class="hero-sub">
+      Five hops, one of which is the only place a safety decision can be enforced.
+    </p>
+  </div>
+</section>
+
+<section class="band band-first">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Data path</p>
+      <h2>The five hops</h2>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <h3>Telegram</h3>
+        <p>The operator sends plain text to a bot. Telegram is the whole user interface —
+        there is no dashboard, no teleop, no joystick. Everything the operator can express,
+        they express in a sentence.</p>
+      </li>
+      <li>
+        <h3>OpenClaw gateway</h3>
+        <p>The gateway receives the message, loads the session, and assembles the prompt. It
+        reads every <code>SKILL.md</code> in the workspace so the model knows what exists.
+        Critically, it also applies the tool profile: the list of tools this agent is
+        permitted to call. This is the enforcement point.</p>
+      </li>
+      <li>
+        <h3>Dispatcher</h3>
+        <p>The language model reads the instruction, the skill descriptions, and whatever
+        results came back from previous steps, then emits one tool call. It does not plan the
+        whole task up front. It takes a step, reads the result, and decides again — which is
+        what makes the loop closed rather than open.</p>
+      </li>
+      <li>
+        <h3>Skill execution</h3>
+        <p>A skill is a Python script in a virtual environment with the Unitree SDK
+        installed. It runs to completion, prints a structured result line, and exits. All
+        the domain logic — watchdog timing, yaw calibration, detection thresholds — lives
+        here, where it can be tested, not in the model's head.</p>
+      </li>
+      <li>
+        <h3>DDS to the robot</h3>
+        <p>The script speaks to the Go2's high-level sport controller over DDS on a wired
+        USB-Ethernet link. No ROS bridge is involved. Motion commands are resent
+        continuously for the duration of the movement, because the controller's watchdog
+        stops the robot roughly a second after the last command.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="band band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Diagram</p>
+      <h2>System overview</h2>
+    </div>
+    <figure>
+      <div class="video">
+        <p class="video-hint"><strong>Architecture diagram</strong>
+        Export your diagram as SVG or PNG and drop it in <code>docs/img/</code>,<br>
+        then replace this block with an &lt;img&gt; tag.</p>
+      </div>
+      <figcaption>Operator → Telegram → gateway → dispatcher → skill → DDS → Go2, with results returning along the same path.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">The enforcement point</p>
+      <h2>Tool profiles</h2>
+    </div>
+    <p class="lede" style="margin-bottom:32px;">
+      A tool profile is a list of tool identifiers the agent may call. Denials are evaluated
+      after allowances, so a denied tool stays denied no matter how it was granted. Two
+      details cost us time and are worth stating plainly.
+    </p>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>Deny beats allow</h3>
+        <p>If a tool appears in both lists, it is denied. This is what makes the profile a
+        reliable floor rather than a suggestion — a broad group allowance cannot
+        accidentally reintroduce something you removed.</p>
+      </div>
+      <div class="card">
+        <h3>Tool IDs are literal</h3>
+        <p>Denying <code>write</code> does not deny <code>apply_patch</code>. They are
+        separate identifiers and both can modify files. Every mutating tool has to be named,
+        or denied as a group.</p>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:28px;">
+      The working profile for Approach 1 is in the repository under
+      <code>config/</code>. It is not reproduced here in full.
+    </p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Network</p>
+      <h2>Two interfaces at once</h2>
+    </div>
+    <p class="measure" style="margin-bottom:28px;">
+      The workstation needs the robot and the internet simultaneously, on separate
+      interfaces. The robot link must never become the default route, or API calls will be
+      sent to a robot that has no idea what to do with them.
+    </p>
+    <table class="table">
+      <thead>
+        <tr><th>Profile</th><th>Interface</th><th>Purpose</th><th>Key setting</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Robot-GO2</code></td>
+          <td>USB-Ethernet adapter</td>
+          <td>DDS link to the Go2 on the <code>192.168.123.x</code> subnet</td>
+          <td><code>ipv4.never-default yes</code></td>
+        </tr>
+        <tr>
+          <td><code>Phone-USB</code></td>
+          <td><code>eth0</code></td>
+          <td>Internet access for the Anthropic API and Telegram</td>
+          <td>Default route</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Not in the loop</p>
+      <h2>What we removed</h2>
+    </div>
+    <p class="measure">
+      Early versions routed commands through a ROS bridge over SSH. Once every skill ran on
+      the workstation and spoke DDS directly, the bridge did nothing but add a hop and a
+      failure mode. It was removed. If you are reading older notes in the repository history
+      that mention rosbridge, they describe a version that no longer exists.
+    </p>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>Go2 Language Control · Robotics Lab, Bar-Ilan University</span>
+    <span><a href="https://github.com/TamirAshwal/Go2">Source on GitHub</a> · Built as static HTML</span>
+  </div>
+</footer>
+
+</body>
+</html>
