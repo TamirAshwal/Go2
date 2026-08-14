@@ -27,9 +27,9 @@
 <section class="hero">
   <div class="wrap">
     <p class="eyebrow">Architecture</p>
-    <h1>From a chat message to a motor command.</h1>
+    <h1>From a chat message to a robot in motion.</h1>
     <p class="hero-sub">
-      Five hops, one of which is the only place a safety decision can be enforced.
+      Five steps, one of which is the only place a safety decision can be enforced.
     </p>
   </div>
 </section>
@@ -38,15 +38,13 @@
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Data path</p>
-      <h2>The five hops</h2>
+      <h2>The five steps</h2>
     </div>
 
     <ol class="steps">
       <li>
         <h3>Telegram</h3>
-        <p>The operator sends plain text to a bot. Telegram is the whole user interface —
-        there is no dashboard, no teleop, no joystick. Everything the operator can express,
-        they express in a sentence.</p>
+        <p>The operator sends plain text to a bot. Telegram is the whole user interface.</p>
       </li>
       <li>
         <h3>OpenClaw gateway</h3>
@@ -65,16 +63,12 @@
       <li>
         <h3>Skill execution</h3>
         <p>A skill is a Python script in a virtual environment with the Unitree SDK
-        installed. It runs to completion, prints a structured result line, and exits. All
-        the domain logic — watchdog timing, yaw calibration, detection thresholds — lives
-        here, where it can be tested, not in the model's head.</p>
+        installed. It runs to completion, prints a structured result line, and exits.</p>
       </li>
       <li>
         <h3>DDS to the robot</h3>
         <p>The script speaks to the Go2's high-level sport controller over DDS on a wired
-        USB-Ethernet link. No ROS bridge is involved. Motion commands are resent
-        continuously for the duration of the movement, because the controller's watchdog
-        stops the robot roughly a second after the last command.</p>
+        USB-Ethernet link. No ROS bridge is involved.</p>
       </li>
     </ol>
   </div>
