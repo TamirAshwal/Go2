@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Videos — Go2 OpenClaw</title>
+<meta name="description" content="Recorded runs of the robot and walkthroughs of the setup.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="mark" href="index.html">Go2 Language Control <span>LAB</span></a>
+    <a class="navlink" href="index.html">Overview</a>
+    <a class="navlink" href="architecture.html">Architecture</a>
+    <a class="navlink" href="skills.html">Skills</a>
+    <a class="navlink" href="experiments.html">Experiments</a>
+    <a class="navlink" href="videos.html" aria-current="page">Videos</a>
+    <a class="navlink" href="reproduce.html">Reproduce</a>
+    <a class="navlink" href="https://github.com/TamirAshwal/Go2">GitHub</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Videos</p>
+    <h1>Watch it work, and watch how it was built.</h1>
+    <p class="hero-sub">
+      Every clip here is a single unedited take. Where a run failed, the failure is here
+      too — the robot walks into things, and hiding that would not help anyone trying to
+      repeat this.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================
+     HOW TO ADD A VIDEO
+
+     1. Upload to YouTube as UNLISTED (not Private — Private
+        blocks embedding and visitors just see an error).
+     2. Take the ID from the URL:
+        https://youtu.be/dQw4w9WgXcQ  ->  dQw4w9WgXcQ
+     3. Replace the <p class="video-hint">...</p> block inside
+        a .video div with:
+
+     <iframe src="https://www.youtube.com/embed/VIDEO_ID"
+             title="Short description"
+             allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+             allowfullscreen></iframe>
+
+     Do not commit .mp4 files. GitHub rejects anything over
+     100 MB and every clone downloads all of them forever.
+     ============================================================ -->
+
+<section class="band band-first">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Runs</p>
+      <h2>The robot doing the task</h2>
+    </div>
+    <p class="lede" style="margin-bottom:38px;">
+      In each of these the operator sends one sentence and nothing else. No skill names, no
+      order of operations, no intervention once the run starts.
+    </p>
+
+    <div class="grid g2">
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Room scan — Approach 2</strong>
+          Paste your embed here.<br>See the instructions in the page source.</p>
+        </div>
+        <figcaption>
+          Instruction: "Look around the room and tell me if anyone is there." There is no
+          scan skill — the sweep is the model composing <code>walk</code> and
+          <code>detect_object</code> on its own.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Walk and turn</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          Basic locomotion. Distance is velocity multiplied by time, so watch the endpoint
+          drift across repeated runs — nothing corrects it.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Detection close up</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          A single frame captured and classified, with the result line sent back to the
+          model visible in the terminal alongside.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>A run that failed</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          Kept deliberately. Worth watching before assuming a successful demo means the
+          system is reliable.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="band band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Walkthroughs</p>
+      <h2>Setting it up yourself</h2>
+    </div>
+    <p class="lede" style="margin-bottom:38px;">
+      The written procedure is on the <a href="reproduce.html">Reproduce</a> page. These
+      recordings cover the steps where reading is not enough — where you need to see which
+      cable, which prompt, which screen.
+    </p>
+
+    <div class="grid g2">
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Network setup</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          Bringing up both interfaces at once and confirming the robot link is not the
+          default route. This is the step that fails most often.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Starting a session</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          Gateway restart through to a fresh Telegram thread, then the three acceptance
+          checks.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Writing a new skill</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          From an empty folder to a skill the model can call: the description file, the
+          script, and the result line.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="video">
+          <p class="video-hint"><strong>Auditing a session log</strong>
+          Paste your embed here.</p>
+        </div>
+        <figcaption>
+          Reading the JSONL log to see which tools were actually called, rather than which
+          ones the model said it called.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Watching these usefully</p>
+      <h2>What to look for</h2>
+    </div>
+    <ul class="stack-list">
+      <li><b>One skill per turn.</b> The robot acts, stops, and waits. Each pause is the model reading a result before choosing again.</li>
+      <li><b>Nothing is scripted.</b> The sequences were composed at runtime from the skills in the library.</li>
+      <li><b>The pauses are the API.</b> Latency between actions is the round trip to the model, not the robot thinking.</li>
+      <li><b>Drift accumulates.</b> On longer runs the robot ends up somewhere other than where the maths says it should.</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>Go2 OpenClaw · Robotics Lab, Bar-Ilan University</span>
+    <span><a href="https://github.com/TamirAshwal/Go2">Source on GitHub</a> · Built as static HTML</span>
+  </div>
+</footer>
+
+</body>
+</html>
