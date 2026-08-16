@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary — Go2 Language Control</title>
+<meta name="description" content="Every term used across the Go2 Language Control project: an alphabetical list, then the same terms grouped by domain.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:      #14171a;
+    --ink-soft: #4a5158;
+    --ink-faint:#8a9199;
+    --rule:     #d9dde1;
+    --rule-soft:#eceef0;
+    --paper:    #ffffff;
+    --agent:    #2f5d8a;
+    --robot:    #8a4b2f;
+    --percept:  #3d6b4a;
+    --sans: "Familjen Grotesk", system-ui, -apple-system, sans-serif;
+    --serif: "Newsreader", Georgia, serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.55;
+    font-weight: 300;
+  }
+
+  .sheet {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 0 28px 90px;
+  }
+
+  /* ---------- screen-only utility bar ---------- */
+
+  .utility {
+    border-bottom: 1px solid var(--rule);
+    background: #f7f8f9;
+    font-family: var(--sans);
+    font-size: 13px;
+  }
+  .utility-inner {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 12px 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    align-items: baseline;
+    justify-content: space-between;
+    color: var(--ink-soft);
+  }
+  .utility a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .utility a:hover { border-bottom-color: var(--ink); }
+  .utility kbd {
+    font-family: var(--mono);
+    font-size: 11px;
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: 1px 5px;
+    background: #fff;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    padding: 64px 0 34px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: clamp(32px, 5.2vw, 46px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin: 0 0 20px;
+    max-width: 15ch;
+  }
+  .standfirst {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 58ch;
+    margin: 0;
+  }
+
+  /* ---------- part headers ---------- */
+
+  .part {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin: 68px 0 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .part-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .part h2 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .part-note {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: 14px 0 0;
+    max-width: 60ch;
+  }
+
+  /* ---------- domain key ---------- */
+
+  .key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .key li { display: flex; align-items: center; gap: 7px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .d-agent   { background: var(--agent); }
+  .d-robot   { background: var(--robot); }
+  .d-percept { background: var(--percept); }
+
+  /* ---------- A–Z entries ---------- */
+
+  .letter-block { margin-top: 36px; }
+
+  .letter {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    margin: 0 0 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .entry {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 4px 26px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .entry:last-child { border-bottom: 0; }
+
+  .term {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.005em;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .term .dot { position: relative; top: -2px; }
+
+  .def { margin: 0; color: var(--ink); }
+
+  /* ---------- Part 2 groups ---------- */
+
+  .group { margin-top: 44px; break-inside: avoid; page-break-inside: avoid; }
+  .group-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .group-head h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+  }
+  .group-count {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    margin-left: auto;
+  }
+  .brief {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 3px 26px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .brief:last-child { border-bottom: 0; }
+  .brief b {
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 14.5px;
+  }
+  .brief span { color: var(--ink-soft); font-size: 15px; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: #f2f4f5;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+
+  .colophon {
+    margin-top: 72px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ink);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    justify-content: space-between;
+  }
+  .colophon a { color: var(--ink-faint); }
+
+  /* ---------- narrow screens ---------- */
+
+  @media (max-width: 620px) {
+    .entry, .brief { grid-template-columns: 1fr; gap: 5px; }
+    .sheet { padding: 0 20px 60px; }
+    .utility-inner { padding: 12px 20px; }
+  }
+
+  /* ---------- print / save as PDF ---------- */
+
+  @page {
+    size: A4;
+    margin: 17mm 15mm 15mm;
+  }
+
+  @media print {
+    .utility, .no-print { display: none !important; }
+    body { font-size: 10.5pt; line-height: 1.45; }
+    .sheet { max-width: none; padding: 0; }
+    .masthead { padding: 0 0 22px; }
+    h1 { font-size: 26pt; }
+    .standfirst { font-size: 11pt; }
+    .part { margin: 26pt 0 6pt; break-after: avoid; page-break-after: avoid; }
+    .part h2 { font-size: 15pt; }
+    .letter-block { margin-top: 18pt; break-inside: auto; }
+    .letter { break-after: avoid; page-break-after: avoid; }
+    .entry { grid-template-columns: 150pt 1fr; padding: 7pt 0; }
+    .term { font-size: 10.5pt; }
+    .brief { grid-template-columns: 150pt 1fr; padding: 5pt 0; }
+    .group { margin-top: 20pt; }
+    .part-2 { break-before: page; page-break-before: always; }
+    a { color: inherit; text-decoration: none; }
+    code { background: none; border: 1px solid var(--rule); }
+  }
+</style>
+</head>
+<body>
+
+<div class="utility no-print">
+  <div class="utility-inner">
+    <span><a href="reference.html">← Back to Reference</a></span>
+    <span>To save a copy: press <kbd>Ctrl</kbd>+<kbd>P</kbd> and choose <b>Save as PDF</b>.</span>
+  </div>
+</div>
+
+<div class="sheet">
+
+<header class="masthead">
+  <p class="kicker">Go2 Language Control · Robotics Lab</p>
+  <h1>Glossary</h1>
+  <p class="standfirst">
+    Several terms below mean something narrower in this system than they do in general use.
+    Where that happens, the definition given is the one that applies across this project.
+    Part&nbsp;1 lists every term alphabetically. Part&nbsp;2 lists the same terms grouped by
+    the part of the system they belong to.
+  </p>
+  <ul class="key">
+    <li><span class="dot d-agent"></span> Agent and dispatch</li>
+    <li><span class="dot d-robot"></span> Control and motion</li>
+    <li><span class="dot d-percept"></span> Perception and models</li>
+  </ul>
+</header>
+
+<!-- ============ PART 1 ============ -->
+
+<div class="part">
+  <span class="part-num">Part 1</span>
+  <h2>All terms, A to Z</h2>
+</div>
+<p class="part-note">
+  Twenty-nine terms in one list. The coloured marker beside each term shows which part of
+  the system it comes from.
+</p>
+
+<div class="letter-block">
+  <p class="letter">A</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Agent</div>
+    <p class="def">A language model given tools and run in a loop, so it can act, observe the outcome, and act again. Distinct from a single question and answer.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Architectural constraint</div>
+    <p class="def">A restriction enforced by removing the capability. The model cannot route around it, because there is nothing to route to.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">C</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>COCO classes</div>
+    <p class="def">The eighty everyday object categories the detection model was trained on — person, chair, bottle and so on. Anything outside that list cannot be detected.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Confidence</div>
+    <p class="def">The model's own score for a detection, from zero to one. A threshold decides what counts as found, and that threshold is a choice, not a fact.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Context</div>
+    <p class="def">Everything the model can see when deciding: the instruction, the skill descriptions, and the results of previous steps in the session.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">D</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>DDS</div>
+    <p class="def">Data Distribution Service — the publish and subscribe protocol the Go2 speaks. The workstation joins the robot's network and exchanges messages over it.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Dead reckoning</div>
+    <p class="def">Estimating position from speed and elapsed time rather than observation. Error accumulates and is never corrected.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Deny list</div>
+    <p class="def">Tools explicitly withheld. Denials are applied after allowances, so a denied tool stays denied however broadly it was granted elsewhere.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Discrete dispatch</div>
+    <p class="def">One skill per turn, with the result read before the next choice. The opposite of writing a loop that runs the whole task in a single call.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Dispatcher</div>
+    <p class="def">What the LLM does here: it reads the user's message, picks one skill, chooses its parameters, and stops. It does not write robot code.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">G</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Gateway</div>
+    <p class="def">The OpenClaw process that receives a Telegram message, assembles the prompt, applies the tool profile, and calls the model. Everything passes through it.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">H</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>High-level control</div>
+    <p class="def">Telling the robot where to go and letting its own controller work out the joints. This project is entirely high-level.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">I</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Inference size</div>
+    <p class="def">The resolution an image is scaled to before detection. Smaller is faster and misses more; this project uses 640 pixels.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">L</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Low-level control</div>
+    <p class="def">Commanding individual joint torques and positions directly. More powerful, far easier to damage the robot with. Not used here.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">O</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Odometry</div>
+    <p class="def">Estimating position from sensors such as wheel or joint encoders. Not used here, which is why drift accumulates.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Open loop</div>
+    <p class="def">Acting without measuring the outcome. Walking two metres means walking at a known speed for a calculated time and assuming it worked.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">P</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Prompt-level rule</div>
+    <p class="def">An instruction written in the system prompt. Constrains what the model is told to do, not what it is able to do.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">Q</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Quadruped</div>
+    <p class="def">A four-legged robot. Locomotion is a controlled fall rather than rolling, so commands are velocities rather than positions.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">R</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Result line</div>
+    <p class="def">The single line a skill prints when it finishes, beginning with <code>RESULT</code> and followed by name and value pairs. The model's only view of what happened.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">S</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Session</div>
+    <p class="def">One continuous conversation with the bot, carrying the full message history. Editing a skill mid-session leaves stale instructions in that history.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Session log</div>
+    <p class="def">A JSONL file recording every message and tool call. The authoritative record of what the model did, as opposed to what it said it did.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Skill</div>
+    <p class="def">A folder containing a description the model reads and a script the machine runs. The unit the model is allowed to invoke.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Skill runner</div>
+    <p class="def">The single tool that executes a named skill with parameters. Kept deliberately minimal: if it could run arbitrary code, the tool profile would mean nothing.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Sport controller</div>
+    <p class="def">The Go2's built-in high-level controller. Accepts commands like walk, sit and stand, and handles balance and gait itself.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">T</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>Tool call</div>
+    <p class="def">A structured request from the model to run something. The gateway checks it against the tool profile before executing it.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-agent"></span>Tool profile</div>
+    <p class="def">The list of tools an agent may call. Enforced by the framework rather than requested in the prompt, which is what makes it reliable.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">W</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Watchdog</div>
+    <p class="def">A safety timeout in the controller. If no new command arrives for about a second it stops the robot, on the assumption the controlling program has died. Motion commands must therefore be resent continuously.</p>
+  </div>
+</div>
+
+<div class="letter-block">
+  <p class="letter">Y</p>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-robot"></span>Yaw rate</div>
+    <p class="def">Rotation speed about the vertical axis, in radians per second. Turning is commanded as a rate held for a duration, not as an angle.</p>
+  </div>
+
+  <div class="entry">
+    <div class="term"><span class="dot d-percept"></span>YOLO</div>
+    <p class="def">A family of object detection models that locate and classify objects in one pass. Fast enough to run per frame.</p>
+  </div>
+</div>
+
+<!-- ============ PART 2 ============ -->
+
+<div class="part part-2">
+  <span class="part-num">Part 2</span>
+  <h2>The same terms, by domain</h2>
+</div>
+<p class="part-note">
+  The vocabulary comes from three different worlds, and knowing which one a term belongs to
+  is often half the definition. One line each here; the full entry is in Part&nbsp;1.
+</p>
+
+<div class="group">
+  <div class="group-head">
+    <span class="dot d-agent"></span>
+    <h3>Agent and dispatch</h3>
+    <span class="group-count">10 terms</span>
+  </div>
+
+  <div class="brief"><b>Agent</b><span>A model given tools and run in a loop.</span></div>
+  <div class="brief"><b>Deny list</b><span>Tools explicitly withheld; denial always wins.</span></div>
+  <div class="brief"><b>Discrete dispatch</b><span>One skill per turn, result read before the next.</span></div>
+  <div class="brief"><b>Dispatcher</b><span>The model's job here: pick one skill and stop.</span></div>
+  <div class="brief"><b>Gateway</b><span>The process every message and tool call passes through.</span></div>
+  <div class="brief"><b>Session</b><span>One conversation, carrying its full history.</span></div>
+  <div class="brief"><b>Session log</b><span>The JSONL record of what actually ran.</span></div>
+  <div class="brief"><b>Skill</b><span>A description plus a script — the unit the model invokes.</span></div>
+  <div class="brief"><b>Skill runner</b><span>The one tool that executes a named skill.</span></div>
+  <div class="brief"><b>Tool profile</b><span>The tools an agent may call, enforced by the framework.</span></div>
+</div>
+
+<div class="group">
+  <div class="group-head">
+    <span class="dot d-robot"></span>
+    <h3>Control and motion</h3>
+    <span class="group-count">10 terms</span>
+  </div>
+
+  <div class="brief"><b>DDS</b><span>The publish and subscribe protocol the Go2 speaks.</span></div>
+  <div class="brief"><b>Dead reckoning</b><span>Position from speed and time; error accumulates.</span></div>
+  <div class="brief"><b>High-level control</b><span>Command the motion, let the robot handle the joints.</span></div>
+  <div class="brief"><b>Low-level control</b><span>Command the joints directly. Not used here.</span></div>
+  <div class="brief"><b>Odometry</b><span>Position from sensors. Not used here.</span></div>
+  <div class="brief"><b>Open loop</b><span>Acting without measuring the outcome.</span></div>
+  <div class="brief"><b>Quadruped</b><span>A four-legged robot, commanded in velocities.</span></div>
+  <div class="brief"><b>Sport controller</b><span>The Go2's built-in controller for walk, sit and stand.</span></div>
+  <div class="brief"><b>Watchdog</b><span>Stops the robot if commands stop arriving.</span></div>
+  <div class="brief"><b>Yaw rate</b><span>Turn speed in radians per second, held for a duration.</span></div>
+</div>
+
+<div class="group">
+  <div class="group-head">
+    <span class="dot d-percept"></span>
+    <h3>Perception and models</h3>
+    <span class="group-count">9 terms</span>
+  </div>
+
+  <div class="brief"><b>Architectural constraint</b><span>A limit enforced by removing the capability.</span></div>
+  <div class="brief"><b>COCO classes</b><span>The eighty categories detection is limited to.</span></div>
+  <div class="brief"><b>Confidence</b><span>The detector's own score, and a threshold you choose.</span></div>
+  <div class="brief"><b>Context</b><span>Everything the model can see when it decides.</span></div>
+  <div class="brief"><b>Inference size</b><span>Resolution before detection; 640 pixels here.</span></div>
+  <div class="brief"><b>Prompt-level rule</b><span>An instruction, not a barrier.</span></div>
+  <div class="brief"><b>Result line</b><span>The one line a skill prints back to the model.</span></div>
+  <div class="brief"><b>Tool call</b><span>A structured request, checked against the profile.</span></div>
+  <div class="brief"><b>YOLO</b><span>Detection models that locate and classify in one pass.</span></div>
+</div>
+
+<div class="colophon">
+  <span>Go2 Language Control · Robotics Lab, INSTITUTION</span>
+  <span><a href="https://github.com/TamirAshwal/Go2">github.com/TamirAshwal/Go2</a></span>
+</div>
+
+</div>
+
+</body>
+</html>
