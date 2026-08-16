@@ -83,12 +83,9 @@
       <h2>System overview</h2>
     </div>
     <figure>
-      <div class="video">
-        <p class="video-hint"><strong>Architecture diagram</strong>
-        Export your diagram as SVG or PNG and drop it in <code>docs/img/</code>,<br>
-        then replace this block with an &lt;img&gt; tag.</p>
-      </div>
-      <figcaption>Operator → Telegram → gateway → dispatcher → skill → DDS → Go2, with results returning along the same path.</figcaption>
+      <img class="diagram" src="img/architecture.png"
+           alt="Operator to Telegram to gateway to dispatcher to skill to DDS to Go2">
+      <figcaption>Operator → Telegram → gateway → dispatcher → skill → Go2, with results returning along the same path.</figcaption>
     </figure>
   </div>
 </section>
