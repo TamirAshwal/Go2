@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Glossary — Go2 Language Control</title>
+<title>Glossary — Go2 OpenClaw</title>
 <meta name="description" content="Every term used across the Go2 Language Control project: an alphabetical list, then the same terms grouped by domain.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -308,7 +308,7 @@
 <div class="sheet">
 
 <header class="masthead">
-  <p class="kicker">Go2 Language Control · Robotics Lab</p>
+  <p class="kicker">Go2 OpenClaw · Robotics Lab</p>
   <h1>Glossary</h1>
   <p class="standfirst">
     Several terms below mean something narrower in this system than they do in general use.
@@ -382,7 +382,7 @@
 
   <div class="entry">
     <div class="term"><span class="dot d-agent"></span>Deny list</div>
-    <p class="def">Tools explicitly withheld. Denials are applied after allowances, so a denied tool stays denied however broadly it was granted elsewhere.</p>
+    <p class="def">A list of tools the agent is not allowed to use. The deny list is applied last, so a tool on it stays blocked even if something else in the config gave the agent wide access.</p>
   </div>
 
   <div class="entry">
@@ -419,7 +419,7 @@
 
   <div class="entry">
     <div class="term"><span class="dot d-percept"></span>Inference size</div>
-    <p class="def">The resolution an image is scaled to before detection. Smaller is faster and misses more; this project uses 640 pixels.</p>
+    <p class="def">The resolution an image is scaled to before detection. Smaller is faster and misses more, this project uses 640 pixels.</p>
   </div>
 </div>
 
@@ -460,7 +460,7 @@
 
   <div class="entry">
     <div class="term"><span class="dot d-robot"></span>Quadruped</div>
-    <p class="def">A four-legged robot. Locomotion is a controlled fall rather than rolling, so commands are velocities rather than positions.</p>
+    <p class="def">A robot with four legs. You control it by telling it how fast to move, not where to go, so distance is speed × time and is only an estimate.</p>
   </div>
 </div>
 
@@ -607,7 +607,7 @@
 </div>
 
 <div class="colophon">
-  <span>Go2 Language Control · Robotics Lab, INSTITUTION</span>
+  <span>Go2 OpenClaw · Robotics Lab, Bar-Ilan University</span>
   <span><a href="https://github.com/TamirAshwal/Go2">github.com/TamirAshwal/Go2</a></span>
 </div>
 
