@@ -4,11 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Skill library — Go2 OpenClaw</title>
-<meta name="description" content="Every skill in the library: the description the model reads, the script that runs, and the result schema it returns.">
+<meta name="description" content="Every skill in the library: the description the model reads, the script that runs, and the result line it returns.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+  /* Collapsible skill entries. Scoped names so nothing in style.css collides. */
+  .skill-entry{border:1px solid rgba(128,145,150,.35);border-radius:6px;margin-bottom:14px;overflow:hidden}
+  .skill-entry > summary{cursor:pointer;padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:.95rem;letter-spacing:.02em;list-style:none;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .skill-entry > summary::-webkit-details-marker{display:none}
+  .skill-entry > summary::before{content:'+';font-weight:500;opacity:.6}
+  .skill-entry[open] > summary::before{content:'\2013'}
+  .skill-entry > summary:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+  .skill-entry > summary .sum-note{font-family:inherit;font-size:.82rem;opacity:.65;font-family:'Familjen Grotesk',sans-serif}
+  .skill-body{padding:4px 20px 22px}
+  .field{margin-top:24px}
+  .field-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;opacity:.6;margin:0 0 8px}
+  .skill-body pre{margin-top:0}
+  .src-link{font-family:'JetBrains Mono',monospace;font-size:.78rem;margin-top:8px}
+  .field ul{margin:0;padding-left:20px}
+  .field li{margin-bottom:6px}
+</style>
 </head>
 <body>
 
@@ -49,15 +66,17 @@
       <div>
         <p class="measure">
           Each skill lives in its own directory in the agent workspace. The gateway reads
-          <code>SKILL.md</code> at startup and puts it in front of the model, the model never
+          <code>SKILL.md</code> at startup and puts it in front of the model; the model never
           sees the Python. Everything the model needs in order to choose correctly has to be
           in that Markdown file, and everything it must not get wrong has to be in the script.
         </p>
         <p class="measure">
-          Every skill ends by printing one line beginning with <code>RESULT</code>, followed
-          by space-separated <code>key=value</code> pairs. That line is the only thing the
-          model reads back. Free-form prose output invites the model to interpret, a fixed
-          schema does not.
+          The skills are documented here in the five fields the OpenGo paper defines for a
+          skill template — head, parameters, constraints, function, prompts. In this
+          implementation the head, parameters and prompts live in <code>SKILL.md</code>, the
+          function is the Python file, and the constraints are split across both: the rules
+          the model is asked to respect are written in the Markdown, the ones that are
+          actually enforced are in the script and in the tool profile.
         </p>
       </div>
       <div>
@@ -74,48 +93,503 @@
 └── detect_object/
     ├── SKILL.md
     └── detect_object.py</code></pre>
-        <div class="result">RESULT found=true class=person conf=0.87</div>
-        <div class="result">RESULT status=ok distance_m=2.0 heading=forward</div>
+        <div class="result">RESULT: object_found=yes object=chair confidence=0.92 position=center closeness=near</div>
+        <div class="result">RESULT: object_found=no reason=not_in_view requested=chair</div>
       </div>
     </div>
+
+    <p class="note" style="margin-top:30px;">
+      <b>Known gap.</b> The fixed <code>RESULT:</code> line above is implemented in
+      <code>detect_object</code> only. <code>walk</code>, <code>sit</code> and
+      <code>stretch</code> currently print human-readable prose instead, which the model has
+      to interpret rather than parse. Since those three are fire-and-forget and their output
+      carries no branch decision, it has not caused an observed failure — but it is an
+      inconsistency in the contract, not a design choice, and the three should be brought
+      onto the same schema.
+    </p>
   </div>
 </section>
 
 <section class="band band-dark">
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow">Worked example</p>
-      <h2>walk, in full</h2>
+      <p class="eyebrow">Source</p>
+      <h2>All four skills, in full</h2>
     </div>
     <p class="lede" style="margin-bottom:32px;">
-      This is the complete skill, reproduced exactly as it exists on disk. Paste your
-      current file contents into the two blocks below so a new student can compare against
-      what is running.
+      Reproduced exactly as they exist on disk. Each entry expands to the complete
+      <code>SKILL.md</code> and <code>.py</code>, so a reader can compare what is written here
+      against what is running without leaving the page. The canonical copies are in
+      <a href="https://github.com/TamirAshwal/Go2/tree/main/skills">skills/</a> in the repo.
     </p>
 
-    <h3 style="margin-bottom:14px;">SKILL.md</h3>
-<pre><code><span class="c"># PASTE THE VERBATIM CONTENTS OF skills/walk/SKILL.md HERE</span>
+    <!-- ================= walk ================= -->
+    <details class="skill-entry">
+      <summary>walk <span class="sum-note">translate by metres, or rotate in place by degrees</span></summary>
+      <div class="skill-body">
 
----
+        <div class="field">
+          <p class="field-label">Head</p>
+          <p class="measure">Locomotion. The only skill that changes the robot's position in the
+          room, and the only one whose effect accumulates across calls.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Parameters</p>
+          <ul>
+            <li><code>magnitude</code> — metres for <code>forward</code>, <code>backward</code>,
+                <code>left</code>, <code>right</code>; degrees for <code>turn_left</code>,
+                <code>turn_right</code>. Defaults to 0.9 for moves and 45 for turns.</li>
+            <li><code>direction</code> — one of the six above. Defaults to <code>forward</code>.</li>
+          </ul>
+          <p class="measure" style="margin-top:10px;">Both are positional command-line arguments,
+          in that order. An unrecognised direction silently falls back to forward.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Constraints</p>
+          <ul>
+            <li>Open loop. Distance is velocity multiplied by time, with no odometry and no
+                correction, so error accumulates over a sequence of calls.</li>
+            <li><code>VELOCITY = 0.3</code> m/s and <code>YAW_RATE = 1.0</code> rad/s are fixed in
+                the script and not exposed to the model.</li>
+            <li>Nothing checks for obstacles. The robot will walk into things.</li>
+            <li>No upper bound on <code>magnitude</code> is enforced.</li>
+          </ul>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Function — walk.py</p>
+<pre><code>import sys
+import time
+import math
+sys.path.insert(0, "/home/tamir/Desktop/openClaw Go2/unitree_sdk2_python")
+from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+from unitree_sdk2py.go2.sport.sport_client import SportClient
+
+# argv[1] = magnitude: meters for moves, DEGREES for turns (default 0.9)
+# argv[2] = direction: forward|backward|left|right|turn_left|turn_right (default forward)
+magnitude = float(sys.argv[1]) if len(sys.argv) &gt; 1 else 0.9
+direction = sys.argv[2] if len(sys.argv) &gt; 2 else "forward"
+
+VELOCITY = 0.3      # m/s for translation
+YAW_RATE = 1.0      # rad/s for turning
+
+translate = {
+    "forward":  (VELOCITY, 0, 0),
+    "backward": (-VELOCITY, 0, 0),
+    "left":     (0, VELOCITY, 0),
+    "right":    (0, -VELOCITY, 0),
+}
+turn = {
+    "turn_left":  (0, 0, YAW_RATE),
+    "turn_right": (0, 0, -YAW_RATE),
+}
+
+if direction in turn:
+    vx, vy, vyaw = turn[direction]
+    duration = math.radians(abs(magnitude)) / YAW_RATE   # magnitude = degrees
+    unit = "deg"
+else:
+    vx, vy, vyaw = translate.get(direction, translate["forward"])
+    duration = abs(magnitude) / VELOCITY                 # magnitude = meters
+    unit = "m"
+
+ChannelFactoryInitialize(0, "enp0s31f6")
+sport_client = SportClient()
+sport_client.SetTimeout(10.0)
+sport_client.Init()
+
+# Resend Move continuously so the robot keeps moving for the full duration
+start = time.time()
+while time.time() - start &lt; duration:
+    sport_client.Move(vx, vy, vyaw)
+    time.sleep(0.1)   # refresh at ~10 Hz
+sport_client.StopMove()
+print(f"Walked {direction} {magnitude}{unit} ({duration:.1f}s)")</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/walk/walk.py">walk.py on GitHub</a></p>
+          <p class="measure" style="margin-top:14px;">The loop is the whole point. The Go2 sport
+          watchdog stops the robot roughly one second after the last <code>Move()</code>, so a
+          single call followed by <code>sleep()</code> produces a one-second twitch regardless of
+          the duration asked for. Resending at about 10&nbsp;Hz is what makes the movement last.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Prompts — SKILL.md</p>
+<pre><code>---
 name: walk
-description: Move the robot forward or turn it in place.
+description: Move the Go2 robot. It can translate (forward, backward, left, right) by a distance in meters, OR rotate in place (turn_left, turn_right) by an angle in degrees.Use this whenever the user asks the robot to walk, move, go, step, turn, rotate, or look around. Do NOT use for sitting (use sit) or stretching (use stretch).
 ---
+
+# Walk Skill
+
+Moves the Go2 in the requested direction by the requested amount, then stops.
 
 ## Parameters
-- direction: forward | turn_left | turn_right
-- distance_m: metres to travel (forward only)
+- **magnitude** (number): For moves (forward/backward/left/right) this is DISTANCE IN METERS. For turns (turn_left/turn_right) this is ANGLE IN DEGREES. If unspecified, use 0.9 for moves and 45 for turns.
+- **direction** (string): one of `forward`, `backward`, `left`, `right`, `turn_left`, `turn_right`. Default `forward`.
 
-## Output
-RESULT status=ok distance_m=&lt;float&gt; heading=&lt;direction&gt;</code></pre>
+## How to run
+`unitree_venv/bin/python ~/.openclaw/workspace/skills/walk/walk.py &lt;magnitude&gt; &lt;direction&gt;`
 
-    <h3 style="margin:34px 0 14px;">walk.py</h3>
-<pre><code><span class="c"># PASTE THE VERBATIM CONTENTS OF skills/walk/walk.py HERE</span>
+Examples:
+- "walk forward 2 meters"  -&gt; walk.py 2 forward
+- "go back half a meter"   -&gt; walk.py 0.5 backward
+- "step left"              -&gt; walk.py 0.9 left
+- "turn left 90 degrees"   -&gt; walk.py 90 turn_left
+- "turn around"            -&gt; walk.py 180 turn_right
+- "look around / scan"     -&gt; turn in steps, e.g. walk.py 45 turn_right repeatedly
 
-<span class="c"># Two things this script exists to get right:</span>
-<span class="c">#  1. Move() must be resent at ~10 Hz for the full duration.</span>
-<span class="c">#     A single call stops after about one second.</span>
-<span class="c">#  2. YAW_RATE = 1.0 is calibrated, not arbitrary. Lower values</span>
-<span class="c">#     turn less than proportionally and stall below ~0.5.</span></code></pre>
+Do not modify this script. Pass values only as arguments.</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/walk/SKILL.md">SKILL.md on GitHub</a></p>
+          <p class="measure" style="margin-top:14px;">The last line of the description does the
+          routing work: naming <code>sit</code> and <code>stretch</code> as the wrong answers is
+          what stops "lie down" being dispatched here as a backward move.</p>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- ================= detect_object ================= -->
+    <details class="skill-entry">
+      <summary>detect_object <span class="sum-note">one camera frame, one YOLO pass, one result line</span></summary>
+      <div class="skill-body">
+
+        <div class="field">
+          <p class="field-label">Head</p>
+          <p class="measure">Perception. Reports whether a named object is currently visible,
+          roughly where it sits in the frame, and roughly how close it is. It does not move the
+          robot.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Parameters</p>
+          <ul>
+            <li><code>target</code> — one COCO class name, lowercase, passed as a positional
+                argument. Anything outside the 80-class list is rejected by name.</li>
+          </ul>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Constraints</p>
+          <ul>
+            <li>Single frame at the moment of the call. Nothing is tracked between calls.</li>
+            <li><code>imgsz=640</code>. At 320 the model misses objects at one to two metres; the
+                value is empirical, not a default.</li>
+            <li>Confidence floor <code>conf=0.4</code>. Below that a match is not reported.</li>
+            <li><code>closeness</code> is bounding-box height as a fraction of the frame, not a
+                distance measurement. A near chair and a far bus can look alike.</li>
+            <li>An unsupported class returns a reason and exits; the script does not guess a
+                nearest class.</li>
+          </ul>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Function — detect_object.py</p>
+<pre><code>import sys
+sys.path.insert(0, "/home/tamir/Desktop/openClaw Go2/unitree_sdk2_python")
+
+import cv2
+import numpy as np
+from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+from unitree_sdk2py.go2.video.video_client import VideoClient
+from ultralytics import YOLO
+
+# --- Read the object to look for from the command-line argument ---
+if len(sys.argv) &lt; 2 or not sys.argv[1].strip():
+    print("RESULT: object_found=no reason=no_object_specified")
+    sys.exit(0)
+
+target = sys.argv[1].strip().lower()
+
+# --- Load model first so we can validate the requested object ---
+model = YOLO("yolov8n.pt")
+valid_names = {name.lower(): cid for cid, name in model.names.items()}
+
+if target not in valid_names:
+    # Unsupported object: report clearly, do NOT guess or modify anything.
+    print(f"RESULT: object_found=no reason=unsupported_object requested={target}")
+    sys.exit(0)
+
+# --- Connect to robot camera over DDS (same interface as movement skills) ---
+ChannelFactoryInitialize(0, "enp0s31f6")
+
+cam = VideoClient()
+cam.SetTimeout(3.0)
+cam.Init()
+
+code, data = cam.GetImageSample()
+if code != 0 or not data:
+    print("RESULT: object_found=no reason=no_camera_frame")
+    sys.exit(0)
+
+img = cv2.imdecode(np.frombuffer(bytes(data), dtype=np.uint8), cv2.IMREAD_COLOR)
+if img is None or img.size == 0:
+    print("RESULT: object_found=no reason=bad_frame")
+    sys.exit(0)
+
+frame_h, frame_w = img.shape[:2]
+
+# --- Run YOLO detection (imgsz=640 confirmed to detect objects reliably) ---
+res = model.predict(img, imgsz=640, conf=0.4, verbose=False)[0]
+
+# --- Collect all detections matching the requested object ---
+matches = []  # (confidence, x1, y1, x2, y2)
+if res.boxes is not None and len(res.boxes) &gt; 0:
+    boxes = res.boxes.xyxy.cpu().numpy()
+    clss = res.boxes.cls.cpu().numpy().astype(int)
+    confs = res.boxes.conf.cpu().numpy()
+    for (x1, y1, x2, y2), cid, conf in zip(boxes, clss, confs):
+        if model.names[int(cid)].lower() == target:
+            matches.append((float(conf), float(x1), float(y1), float(x2), float(y2)))
+
+if not matches:
+    print(f"RESULT: object_found=no reason=not_in_view requested={target}")
+    sys.exit(0)
+
+# --- Pick the most confident match ---
+matches.sort(key=lambda m: m[0], reverse=True)
+conf, x1, y1, x2, y2 = matches[0]
+
+# --- Horizontal position: left / center / right ---
+box_center_x = 0.5 * (x1 + x2)
+norm_x = box_center_x / frame_w
+if norm_x &lt; 0.4:
+    position = "left"
+elif norm_x &gt; 0.6:
+    position = "right"
+else:
+    position = "center"
+
+# --- Closeness proxy: box height relative to frame ---
+size_frac = (y2 - y1) / frame_h
+if size_frac &gt; 0.6:
+    closeness = "near"
+elif size_frac &gt; 0.3:
+    closeness = "medium"
+else:
+    closeness = "far"
+
+print(f"RESULT: object_found=yes object={target} confidence={conf:.2f} position={position} closeness={closeness}")</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/detect_object/detect_object.py">detect_object.py on GitHub</a></p>
+          <p class="measure" style="margin-top:14px;">Every exit path prints a
+          <code>RESULT:</code> line and exits zero, including the failures. A skill that dies on a
+          traceback hands the model a stack trace and an ambiguous situation; a skill that reports
+          <code>reason=no_camera_frame</code> hands it a fact it can act on.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Prompts — SKILL.md</p>
+<pre><code>---
+name: detect_object
+description: Look through the robot's camera and report whether a specific object is visible, where it is (left/center/right), and roughly how close it is (near/medium/far). Use whenever the user wants the robot to find, look for, locate, see, or check for an object (for example a chair, a person, a bottle, a couch). The object to look for is passed as an argument.
+---
+
+# Detect Object
+
+When the user wants the robot to look for an object, run the detection script with the object name as an argument. Use this exact command, replacing OBJECT with the lowercaseobject name:
+
+```bash
+cd "/home/tamir/Desktop/openClaw Go2" &amp;&amp; unitree_venv/bin/python ~/.openclaw/workspace/skills/detect_object/detect_object.py OBJECT
+```
+
+Example for a chair:
+
+```bash
+cd "/home/tamir/Desktop/openClaw Go2" &amp;&amp; unitree_venv/bin/python ~/.openclaw/workspace/skills/detect_object/detect_object.py chair
+```
+
+## Supported objects
+
+The detector can ONLY recognize these objects (the YOLO/COCO classes). Pass exactly one of these names, in lowercase:
+
+person, bicycle, car, motorcycle, airplane, bus, train, truck, boat, traffic light, fire hydrant, stop sign, parking meter, bench, bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe, backpack, umbrella, handbag, tie, suitcase, frisbee, skis, snowboard, sports ball, kite, baseball bat, baseball glove, skateboard, surfboard, tennis racket, bottle, wine glass, cup, fork, knife, spoon, bowl, banana, apple, sandwich, orange, broccoli, carrot, hot dog, pizza, donut, cake, chair, couch, potted plant, bed, dining table, toilet, tv, laptop, mouse, remote, keyboard, cell phone, microwave, oven, toaster, sink, refrigerator, book, clock, vase, scissors, teddy bear, hair drier, toothbrush
+
+If the user asks for something that is NOT in this list (for example "keys", "wallet", "my phone charger"), DO NOT run the script with a made-up class and DO NOT edit the script. Instead, tell the user that object is not supported and, if helpful, suggest the closest supported one (for example "cell phone" instead of "phone").
+
+## Reading the result
+
+The script prints one line. Examples:
+
+- `RESULT: object_found=yes object=chair confidence=0.92 position=center closeness=near`
+- `RESULT: object_found=no reason=not_in_view requested=chair`
+- `RESULT: object_found=no reason=unsupported_object requested=keys`
+
+Interpretation:
+- `object_found=yes` means the requested object is currently visible.
+- `position` is where it is in the camera frame: `left`, `center`, or `right`.
+- `closeness` is a rough distance: `near`, `medium`, or `far`.
+- `object_found=no` means it was not seen this time; `reason` says why.
+
+Use this result to decide what to do next. For example, if the user said "if you see a chair, stretch" and the result is `object_found=yes`, then run the stretch skill next.
+
+## Rules
+- Only run detect_object.py via the command above. Do not write your own detection or camera code.
+- Do not import or call the Unitree SDK, OpenCV, or YOLO directly.
+- Do not create scripts in /tmp or anywhere else.
+- Do not edit this script or its SKILL.md to handle an unsupported object. Report instead.
+- This skill only looks; it does not move the robot.</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/detect_object/SKILL.md">SKILL.md on GitHub</a></p>
+          <p class="measure" style="margin-top:14px;">This is the longest description in the
+          library because it is the only skill with an input the model can get wrong in an
+          interesting way. Listing all eighty classes is what turns "find my keys" into a refusal
+          rather than a plausible-looking substitution.</p>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- ================= sit ================= -->
+    <details class="skill-entry">
+      <summary>sit <span class="sum-note">one sport command, no parameters</span></summary>
+      <div class="skill-body">
+
+        <div class="field">
+          <p class="field-label">Head</p>
+          <p class="measure">Posture. Lowers the robot to a resting position via the built-in
+          sport client.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Parameters</p>
+          <p class="measure">None. The skill either runs or it does not.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Constraints</p>
+          <ul>
+            <li>No precondition check. Calling it while the robot is already down is a no-op at
+                the controller, not an error the skill catches.</li>
+            <li>Prints the raw SDK return code rather than a <code>RESULT:</code> line — see the
+                known gap noted above.</li>
+          </ul>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Function — sit.py</p>
+<pre><code>import sys
+import time
+sys.path.insert(0, "/home/tamir/Desktop/openClaw Go2/unitree_sdk2_python")
+
+from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+from unitree_sdk2py.go2.sport.sport_client import SportClient
+
+ChannelFactoryInitialize(0, "enp0s31f6")
+
+sport_client = SportClient()
+sport_client.SetTimeout(10.0)
+sport_client.Init()
+
+# Sit down
+ret = sport_client.StandDown()
+print(f"StandDown ret: {ret}")</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/sit/sit.py">sit.py on GitHub</a></p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Prompts — SKILL.md</p>
+<pre><code>---
+name: sit
+description: Make the robot sit down or lie down. Use when the user asks the robot to sit, sit down, lie down, or rest.
+---
+
+# Sit
+
+When the user wants the robot to sit down, run the sit script with this exact command:
+
+```bash
+cd "/home/tamir/Desktop/openClaw Go2" &amp;&amp; unitree_venv/bin/python ~/.openclaw/workspace/skills/sit/sit.py
+```
+
+## Rules
+- Only run sit.py via the command above. Do not write your own movement code.
+- Do not import or call the Unitree SDK directly.
+- Do not create scripts in /tmp or anywhere else.</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/sit/SKILL.md">SKILL.md on GitHub</a></p>
+        </div>
+
+      </div>
+    </details>
+
+    <!-- ================= stretch ================= -->
+    <details class="skill-entry">
+      <summary>stretch <span class="sum-note">built-in gesture, used as the end-to-end link check</span></summary>
+      <div class="skill-body">
+
+        <div class="field">
+          <p class="field-label">Head</p>
+          <p class="measure">Gesture. Runs the Go2's built-in stretch routine. In practice this is
+          the skill used to confirm the whole chain — Telegram, gateway, model, script, DDS,
+          robot — is alive before anything else is attempted.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Parameters</p>
+          <p class="measure">None.</p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Constraints</p>
+          <ul>
+            <li>The robot needs clearance around it; the routine extends the legs.</li>
+            <li>Same output inconsistency as <code>sit</code>: prints an SDK return code, not a
+                <code>RESULT:</code> line.</li>
+          </ul>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Function — stretch.py</p>
+<pre><code>import sys
+import time
+sys.path.insert(0, "/home/tamir/Desktop/openClaw Go2/unitree_sdk2_python")
+
+from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+from unitree_sdk2py.go2.sport.sport_client import SportClient
+
+ChannelFactoryInitialize(0, "enp0s31f6")
+
+sport_client = SportClient()
+sport_client.SetTimeout(10.0)
+sport_client.Init()
+
+# Stretch routine
+ret = sport_client.Stretch()
+print(f"Stretch ret: {ret}")</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/stretch/stretch.py">stretch.py on GitHub</a></p>
+        </div>
+
+        <div class="field">
+          <p class="field-label">Prompts — SKILL.md</p>
+<pre><code>---
+name: stretch
+description: Make the robot do a stretch routine. Use when the user asks the robot to stretch, do a stretch, or warm up.
+---
+
+# Stretch
+
+When the user wants the robot to stretch, run the stretch script with this exact command:
+
+```bash
+cd "/home/tamir/Desktop/openClaw Go2" &amp;&amp; unitree_venv/bin/python ~/.openclaw/workspace/skills/stretch/stretch.py
+```
+
+## Rules
+- Only run stretch.py via the command above. Do not write your own movement code.
+- Do not import or call the Unitree SDK directly.
+- Do not create scripts in /tmp or anywhere else.</code></pre>
+          <p class="src-link"><a href="https://github.com/TamirAshwal/Go2/blob/main/skills/stretch/SKILL.md">SKILL.md on GitHub</a></p>
+        </div>
+
+      </div>
+    </details>
+
+    <p class="note" style="margin-top:30px;">
+      <b>Reproducing these.</b> All four scripts hardcode the network interface
+      <code>enp0s31f6</code> and the absolute path
+      <code>/home/tamir/Desktop/openClaw Go2</code>. Both are specific to the lab machine and
+      both have to be changed before the skills will run anywhere else. See
+      <a href="reproduce.html">Reproduce</a>.
+    </p>
   </div>
 </section>
 
@@ -128,37 +602,40 @@ RESULT status=ok distance_m=&lt;float&gt; heading=&lt;direction&gt;</code></pre>
 
     <table class="table">
       <thead>
-        <tr><th>Skill</th><th>Parameters</th><th>Result line</th><th>Notes</th></tr>
+        <tr><th>Skill</th><th>Arguments</th><th>Output</th><th>Notes</th></tr>
       </thead>
       <tbody>
         <tr>
           <td><code>walk</code></td>
-          <td><code>direction</code>, <code>distance_m</code></td>
-          <td><code>status</code>, <code>distance_m</code>, <code>heading</code></td>
-          <td>Open loop at 0.3&nbsp;m/s. Turns use <code>YAW_RATE=1.0</code>, about 80° per call.</td>
+          <td><code>magnitude</code>, <code>direction</code></td>
+          <td>Prose line: direction, magnitude, duration</td>
+          <td>Open loop at 0.3&nbsp;m/s translation, 1.0&nbsp;rad/s yaw. Turns take degrees.</td>
         </tr>
         <tr>
           <td><code>sit</code></td>
           <td>—</td>
-          <td><code>status</code></td>
-          <td>High-level sport command. Returns once the posture completes.</td>
+          <td>SDK return code</td>
+          <td>High-level sport command, <code>StandDown()</code>.</td>
         </tr>
         <tr>
           <td><code>stretch</code></td>
           <td>—</td>
-          <td><code>status</code></td>
+          <td>SDK return code</td>
           <td>Built-in gesture. Used mainly to confirm the DDS link end to end.</td>
         </tr>
         <tr>
           <td><code>detect_object</code></td>
           <td><code>target</code></td>
-          <td><code>found</code>, <code>class</code>, <code>conf</code></td>
-          <td>YOLOv8-nano at <code>imgsz=640</code>, COCO classes, single frame, CUDA.</td>
+          <td><code>object_found</code>, <code>object</code>, <code>confidence</code>, <code>position</code>, <code>closeness</code>, or <code>reason</code></td>
+          <td>YOLOv8-nano at <code>imgsz=640</code>, <code>conf=0.4</code>, COCO classes, single frame, CUDA.</td>
         </tr>
       </tbody>
     </table>
 
     <p class="note" style="margin-top:28px;">
+      Four skills is the whole library. Anything the system appears to do beyond this list —
+      sweeping a room, searching for someone — is the model composing these four in sequence at
+      runtime, not a fifth skill.
     </p>
   </div>
 </section>
