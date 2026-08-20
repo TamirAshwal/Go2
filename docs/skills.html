@@ -66,13 +66,12 @@
       <div>
         <p class="measure">
           Each skill lives in its own directory in the agent workspace. The gateway reads
-          <code>SKILL.md</code> at startup and puts it in front of the model; the model never
+          <code>SKILL.md</code> at startup and puts it in front of the model. the model never
           sees the Python. Everything the model needs in order to choose correctly has to be
           in that Markdown file, and everything it must not get wrong has to be in the script.
         </p>
         <p class="measure">
-          The skills are documented here in the five fields the OpenGo paper defines for a
-          skill template — head, parameters, constraints, function, prompts. In this
+          The skills are documented here in the five fields: head, parameters, constraints, function, prompts. In this
           implementation the head, parameters and prompts live in <code>SKILL.md</code>, the
           function is the Python file, and the constraints are split across both: the rules
           the model is asked to respect are written in the Markdown, the ones that are
